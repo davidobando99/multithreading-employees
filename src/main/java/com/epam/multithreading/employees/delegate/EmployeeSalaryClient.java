@@ -1,6 +1,6 @@
 package com.epam.multithreading.employees.delegate;
 
-import com.epam.multithreading.employees.model.Salary;
+import com.epam.multithreading.employees.domain.Salary;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;

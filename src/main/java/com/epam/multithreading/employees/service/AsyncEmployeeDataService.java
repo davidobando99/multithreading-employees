@@ -2,9 +2,9 @@ package com.epam.multithreading.employees.service;
 
 import com.epam.multithreading.employees.delegate.EmployeeDataClient;
 import com.epam.multithreading.employees.delegate.EmployeeSalaryClient;
-import com.epam.multithreading.employees.model.Employee;
-import com.epam.multithreading.employees.model.HiredEmployee;
-import com.epam.multithreading.employees.model.Salary;
+import com.epam.multithreading.employees.domain.Employee;
+import com.epam.multithreading.employees.domain.HiredEmployee;
+import com.epam.multithreading.employees.domain.Salary;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
