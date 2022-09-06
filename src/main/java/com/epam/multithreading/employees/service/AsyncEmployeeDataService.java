@@ -10,17 +10,19 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
-public class FetchEmployeeDataService {
+public class AsyncEmployeeDataService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(FetchEmployeeDataService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AsyncEmployeeDataService.class);
 
     @Autowired
     private EmployeeDataClient employeeDataClient;
@@ -30,42 +32,46 @@ public class FetchEmployeeDataService {
 
     ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
-    public List<Employee> fetchEmployeeData(List<String> employeeIds){
-        List<CompletableFuture<Employee>> future = employeeIds.stream()
-                .map(this::fetchEmployeeDataAsync)
-                .collect(Collectors.toList());
-        return future.stream().map(CompletableFuture::join)
-                .collect(Collectors.toList());
+
+    public List<Employee> fetchEmployeeDataAsync() throws ExecutionException, InterruptedException {
+            CompletableFuture<List<Employee>> employees = fetchHiredEmployees().thenComposeAsync(hiredEmployees -> {
+                List<CompletableFuture<Employee>> list = hiredEmployees.stream().map(this::employeeCompletedWithSalary).collect(Collectors.toList());
+                CompletableFuture<Void> allFuturesResult =
+                        CompletableFuture.allOf(list.toArray(new CompletableFuture[0]));
+                return allFuturesResult.thenApply(v ->
+                        list.stream().
+                                map(CompletableFuture::join)
+                                .collect(Collectors.toList())
+                );
+            });
+            return employees.get();
     }
 
-    private CompletableFuture<Employee> fetchEmployeeDataAsync(String employeeId) {
+    private CompletableFuture<Employee> employeeCompletedWithSalary(HiredEmployee employee){
         return CompletableFuture.supplyAsync(() -> {
-
-            List<Object> result = Stream.of(fetchHiredEmployees(employeeId), fetchSalaryData(employeeId))
+            LOGGER.info("fetchEmployeesWithSalary {} ", Thread.currentThread().getName());
+            List<Object> result = Stream.of(CompletableFuture.supplyAsync(() -> employee), fetchSalaryData(employee.getId()))
                     .map(CompletableFuture::join)
                     .collect(Collectors.toList());
             HiredEmployee hiredEmployee = (HiredEmployee) result.get(0);
             Salary salary = (Salary) result.get(1);
             LOGGER.info(hiredEmployee.toString());
             return new Employee(hiredEmployee.getId(),hiredEmployee.getName(), hiredEmployee.getTitle(),salary.getSalary());
-        }, executor).exceptionally(ex -> {
-            LOGGER.warn("There is an exception {} ",ex.getMessage());
-            return new Employee();
         });
     }
 
-    public CompletableFuture<HiredEmployee> fetchHiredEmployees(String employeeId){
+    private CompletableFuture<List<HiredEmployee>> fetchHiredEmployees(){
         return CompletableFuture.supplyAsync(() -> {
             LOGGER.info("fetchHiredEmployees {} ", Thread.currentThread().getName());
-            return employeeDataClient.getHiredEmployee(employeeId);
+            return employeeDataClient.hiredEmployees();
                         },executor)
                 .exceptionally(ex -> {
                     LOGGER.warn("There is an exception {} ",ex.getMessage());
-                    return new HiredEmployee();
+                    return new ArrayList<>();
                 });
     }
 
-    public CompletableFuture<Salary> fetchSalaryData(String employeeId){
+    private CompletableFuture<Salary> fetchSalaryData(String employeeId){
         return CompletableFuture.supplyAsync(() -> {
                     LOGGER.info("fetchSalaryData {} ", Thread.currentThread().getName());
                     return employeeSalaryClient.getSalary(employeeId);
