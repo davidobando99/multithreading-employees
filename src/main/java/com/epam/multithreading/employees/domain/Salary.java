@@ -1,4 +1,4 @@
-package com.epam.multithreading.employees.model;
+package com.epam.multithreading.employees.domain;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;

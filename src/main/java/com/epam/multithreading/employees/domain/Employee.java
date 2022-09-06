@@ -1,4 +1,4 @@
-package com.epam.multithreading.employees.model;
+package com.epam.multithreading.employees.domain;
 
 public class Employee {
 

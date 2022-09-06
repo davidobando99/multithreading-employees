@@ -1,6 +1,6 @@
 package com.epam.multithreading.employees;
 
-import com.epam.multithreading.employees.model.Employee;
+import com.epam.multithreading.employees.domain.Employee;
 import com.epam.multithreading.employees.service.FetchEmployeeDataService;
 import org.apache.commons.lang3.time.StopWatch;
 import org.slf4j.Logger;
@@ -11,8 +11,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Bean;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 
